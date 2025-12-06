@@ -1,51 +1,13 @@
 // app/dashboard/page.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
-import { 
-  Activity, 
-  Apple, 
-  Moon, 
-  Heart, 
-  TrendingUp,
-  Droplets,
-  Flame,
-  Target,
-  Calendar
-} from 'lucide-react'
+import { useState } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Activity, Apple, Moon, Heart, TrendingUp, Droplets, Flame, Target, Calendar } from 'lucide-react'
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session) {
-        router.push('/auth/login')
-        return
-      }
-      
-      setUser(session.user)
-      setLoading(false)
-    }
-
-    checkAuth()
-  }, [router])
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-
-  const healthCards = [
+  const [healthCards] = useState([
     {
       title: 'Activity',
       icon: <Activity className="w-6 h-6" />,
@@ -82,158 +44,177 @@ export default function DashboardPage() {
       bgColor: 'bg-cyan-500/10',
       trend: '90%',
     },
-  ]
+  ])
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
-            Welcome back, {user?.email?.split('@')[0]}! 👋
+            Dashboard Overview
           </h1>
-          <p className="text-muted-foreground mt-2">
-            Here's your health summary for today
+          <p className="text-muted-foreground mt-1">
+            Track your health progress and insights
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent/30 text-accent-foreground">
-            <Calendar className="w-5 h-5" />
-            <span className="font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+            <Calendar className="w-4 h-4" />
+            <span className="font-medium">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            </span>
           </div>
+          <Button>
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Add Log
+          </Button>
         </div>
       </div>
 
-      {/* Health Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Health Metrics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {healthCards.map((card, index) => (
-          <div 
-            key={index} 
-            className="glass-card p-6 hover:shadow-lg transition-shadow"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-xl ${card.bgColor} ${card.color}`}>
-                {card.icon}
+          <Card key={index} className="border-border/50 hover:border-primary/30 transition-colors">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`p-3 rounded-xl ${card.bgColor} ${card.color}`}>
+                  {card.icon}
+                </div>
+                <span className={`text-sm font-medium ${card.trend.includes('+') ? 'text-green-500' : 'text-muted-foreground'}`}>
+                  {card.trend}
+                </span>
               </div>
-              <span className="text-sm font-medium text-green-500">
-                {card.trend}
-              </span>
-            </div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">
-              {card.title}
-            </h3>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-foreground">
-                {card.value}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {card.unit}
-              </span>
-            </div>
-          </div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                {card.title}
+              </h3>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-foreground">
+                  {card.value}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {card.unit}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      {/* Quick Actions */}
+      {/* Stats Grid */}
       <div className="grid md:grid-cols-3 gap-6">
-        <div className="glass-card p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-primary/10">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
               <Target className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Daily Goals</h3>
-              <p className="text-sm text-muted-foreground">3 of 5 completed</p>
-            </div>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-foreground">10,000 steps</span>
-                <span className="text-muted-foreground">85%</span>
+              Daily Goals
+            </CardTitle>
+            <CardDescription>3 of 5 goals completed today</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {[
+              { label: '10,000 steps', progress: 85, color: 'bg-primary' },
+              { label: '2L water', progress: 90, color: 'bg-cyan-500' },
+              { label: '7+ hours sleep', progress: 94, color: 'bg-purple-500' },
+            ].map((goal, index) => (
+              <div key={index}>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-foreground">{goal.label}</span>
+                  <span className="text-muted-foreground">{goal.progress}%</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full ${goal.color} transition-all duration-500`}
+                    style={{ width: `${goal.progress}%` }}
+                  />
+                </div>
               </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-primary rounded-full" style={{ width: '85%' }}></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-foreground">2L water</span>
-                <span className="text-muted-foreground">90%</span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-cyan-500 rounded-full" style={{ width: '90%' }}></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-green-500/10">
-              <Flame className="w-5 h-5 text-green-500" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Recent Activity</h3>
-              <p className="text-sm text-muted-foreground">Today's workouts</p>
-            </div>
-          </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-foreground">Morning Run</span>
-              <span className="text-sm text-muted-foreground">45 min</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-foreground">Weight Training</span>
-              <span className="text-sm text-muted-foreground">30 min</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-purple-500/10">
-              <TrendingUp className="w-5 h-5 text-purple-500" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Weekly Progress</h3>
-              <p className="text-sm text-muted-foreground">+12% vs last week</p>
-            </div>
-          </div>
-          <div className="h-32 flex items-end gap-1">
-            {[60, 75, 85, 90, 70, 95, 88].map((height, index) => (
-              <div 
-                key={index}
-                className="flex-1 bg-gradient-to-t from-primary to-primary/60 rounded-t-lg transition-all hover:opacity-80"
-                style={{ height: `${height}%` }}
-                title={`Day ${index + 1}: ${height}%`}
-              />
             ))}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Flame className="w-5 h-5 text-orange-500" />
+              Recent Activity
+            </CardTitle>
+            <CardDescription>Today's workouts & exercises</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[
+              { activity: 'Morning Run', duration: '45 min', calories: '320' },
+              { activity: 'Weight Training', duration: '30 min', calories: '280' },
+              { activity: 'Yoga Session', duration: '20 min', calories: '150' },
+            ].map((item, index) => (
+              <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-accent/30">
+                <div>
+                  <p className="font-medium text-foreground">{item.activity}</p>
+                  <p className="text-sm text-muted-foreground">{item.duration}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium text-foreground">{item.calories}</p>
+                  <p className="text-sm text-muted-foreground">calories</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="w-5 h-5 text-red-500" />
+              Health Score
+            </CardTitle>
+            <CardDescription>Your overall wellness index</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-4">
+              <div className="relative inline-flex">
+                <div className="w-32 h-32 rounded-full border-8 border-muted"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-foreground">87</div>
+                    <div className="text-sm text-muted-foreground">/100</div>
+                  </div>
+                </div>
+              </div>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Excellent! Keep up the good work
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Welcome Message */}
-      <div className="glass-card p-8 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/70 mb-4">
-          <Heart className="w-8 h-8 text-primary-foreground" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground mb-3">
-          Welcome to HealthTrack Pro! 🎉
-        </h2>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Your health journey starts here. Track your fitness, monitor nutrition, 
-          and achieve your wellness goals with our comprehensive health tracker.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-4 justify-center">
-          <button className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors">
-            Add Health Log
-          </button>
-          <button className="px-6 py-2 border border-input text-foreground rounded-lg font-medium hover:bg-accent transition-colors">
-            Set Goals
-          </button>
-        </div>
-      </div>
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>Manage your health data</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+              <Apple className="w-6 h-6" />
+              <span>Log Food</span>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+              <Activity className="w-6 h-6" />
+              <span>Add Workout</span>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+              <Moon className="w-6 h-6" />
+              <span>Sleep Log</span>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+              <Droplets className="w-6 h-6" />
+              <span>Water Intake</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
