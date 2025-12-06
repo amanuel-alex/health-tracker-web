@@ -1,9 +1,9 @@
-
+// components/layout/Sidebar.tsx
 'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { 
   LayoutDashboard,
   FileText,
@@ -21,10 +21,12 @@ import {
   Droplets,
   Moon,
   Apple,
-  Home
+  Home,
+  TrendingUp,
+  Activity,
+  Shield
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
@@ -35,13 +37,13 @@ interface SidebarProps {
 
 export default function Sidebar({ userEmail, userName }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
-  const [activeCategory, setActiveCategory] = useState('overview')
   const pathname = usePathname()
   const router = useRouter()
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
+    router.refresh()
   }
 
   const navItems = [
@@ -76,7 +78,7 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
       ]
     },
     {
-      category: 'health',
+      category: 'tracking',
       label: 'Health Tracking',
       items: [
         {
@@ -104,6 +106,24 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
           badge: null
         }
       ]
+    },
+    {
+      category: 'goals',
+      label: 'Goals & Progress',
+      items: [
+        {
+          href: '/dashboard/goals',
+          label: 'My Goals',
+          icon: <Target className="w-5 h-5" />,
+          badge: '3'
+        },
+        {
+          href: '/dashboard/progress',
+          label: 'Progress',
+          icon: <TrendingUp className="w-5 h-5" />,
+          badge: null
+        }
+      ]
     }
   ]
 
@@ -127,17 +147,21 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
     return pathname.startsWith(href)
   }
 
+  // Safe user info
+  const safeUserEmail = userEmail || 'user@example.com'
+  const safeUserName = userName || safeUserEmail.split('@')[0]
+
   return (
     <aside className={cn(
-      "flex flex-col h-screen border-r border-border bg-sidebar transition-all duration-300 sticky top-0",
+      "flex flex-col h-screen border-r border-border bg-sidebar transition-all duration-300 ease-in-out sticky top-0",
       collapsed ? "w-20" : "w-64"
     )}>
-      {/* Logo */}
+      {/* Logo Section */}
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center justify-between">
           {!collapsed ? (
-            <Link href="/dashboard" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+            <Link href="/dashboard" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
                 <Heart className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
@@ -147,7 +171,7 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
             </Link>
           ) : (
             <div className="w-full flex justify-center">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
                 <Heart className="w-6 h-6 text-primary-foreground" />
               </div>
             </div>
@@ -156,7 +180,7 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
             variant="ghost"
             size="icon"
             onClick={() => setCollapsed(!collapsed)}
-            className="text-sidebar-foreground hover:bg-sidebar-accent"
+            className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? (
@@ -171,7 +195,7 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-6 px-4">
         {navItems.map((section) => (
-          <div key={section.category} className="mb-8">
+          <div key={section.category} className="mb-8 last:mb-0">
             {!collapsed && (
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-3">
                 {section.label}
@@ -183,13 +207,14 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
                   <Link
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors group",
+                      "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
                       isActive(item.href)
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent"
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:shadow-sm"
                     )}
                   >
                     <span className={cn(
+                      "transition-colors",
                       isActive(item.href)
                         ? "text-sidebar-primary-foreground"
                         : "text-muted-foreground group-hover:text-sidebar-accent-foreground"
@@ -200,7 +225,7 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
                       <>
                         <span className="flex-1 text-sm font-medium">{item.label}</span>
                         {item.badge && (
-                          <span className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">
+                          <span className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary font-medium">
                             {item.badge}
                           </span>
                         )}
@@ -213,7 +238,7 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
           </div>
         ))}
 
-        {/* Quick Stats */}
+        {/* Daily Progress */}
         {!collapsed && (
           <div className="mt-8 p-4 rounded-xl bg-sidebar-accent/30 border border-sidebar-border">
             <h4 className="text-sm font-medium text-sidebar-foreground mb-3">Today's Progress</h4>
@@ -225,7 +250,7 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
                 </div>
                 <div className="h-1.5 w-full bg-sidebar-border rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-primary rounded-full" 
+                    className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-500"
                     style={{ width: '85.42%' }}
                   />
                 </div>
@@ -237,26 +262,35 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
                 </div>
                 <div className="h-1.5 w-full bg-sidebar-border rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-blue-500 rounded-full" 
+                    className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500"
                     style={{ width: '90%' }}
                   />
                 </div>
               </div>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full mt-4 text-xs"
+              onClick={() => router.push('/dashboard/logs')}
+            >
+              <Activity className="w-3 h-3 mr-2" />
+              Add Today's Log
+            </Button>
           </div>
         )}
       </div>
 
       {/* Bottom Section */}
-      <div className="border-t border-sidebar-border p-4">
-        {/* Settings & Help */}
-        <ul className="space-y-1 mb-4">
+      <div className="border-t border-sidebar-border p-4 space-y-4">
+        {/* Settings */}
+        <ul className="space-y-1">
           {bottomItems.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors",
+                  "flex items-center gap-3 px-3 py-3 rounded-xl transition-colors",
                   isActive(item.href)
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "text-sidebar-foreground hover:bg-sidebar-accent"
@@ -272,18 +306,27 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
         </ul>
 
         {/* User Profile */}
-        {!collapsed && (userName || userEmail) && (
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent/30 mb-4">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <User className="w-4 h-4 text-primary-foreground" />
+        {!collapsed && (
+          <div className="p-3 rounded-xl bg-sidebar-accent/30 border border-sidebar-border">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow">
+                <User className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-sidebar-foreground truncate">
+                  {safeUserName}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {safeUserEmail}
+                </p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">
-                {userName || 'User'}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {userEmail || 'Health Member'}
-              </p>
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1">
+                <Shield className="w-3 h-3 text-green-500" />
+                <span className="text-muted-foreground">Premium</span>
+              </div>
+              <span className="text-green-500 font-medium">Day 14</span>
             </div>
           </div>
         )}
