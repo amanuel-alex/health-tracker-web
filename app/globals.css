@@ -227,3 +227,40 @@
     @apply w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin;
   }
 }
+
+
+@layer utilities {
+  /* Smooth transitions */
+  .transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+  
+  /* Slide animations */
+  @keyframes slide-in-left {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes slide-out-left {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+  
+  .animate-slide-in-left {
+    animation: slide-in-left 0.3s ease-out;
+  }
+  
+  .animate-slide-out-left {
+    animation: slide-out-left 0.3s ease-in;
+  }
+}

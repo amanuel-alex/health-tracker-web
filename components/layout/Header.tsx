@@ -1,4 +1,4 @@
-// components/layout/Header.tsx
+// components/layout/Header.tsx - Remove mobile menu button (since it's now in Sidebar)
 'use client'
 
 import { useState } from 'react'
@@ -10,11 +10,9 @@ import {
   Sun,
   Moon,
   Calendar,
-  Menu,
-  Sparkles,
-  Target,
+  Flame,
   Droplets,
-  Flame
+  Target,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { Input } from '@/components/ui/input'
@@ -41,7 +39,6 @@ export default function Header({ userEmail, userName }: HeaderProps) {
     { id: 1, text: 'Water reminder: Time to hydrate!', time: '5 min ago', read: false },
     { id: 2, text: 'Weekly health report is ready', time: '1 hour ago', read: true },
     { id: 3, text: "You've reached 8,000 steps today!", time: '2 hours ago', read: true },
-    { id: 4, text: 'New workout challenge available', time: '1 day ago', read: true },
   ]
 
   const healthStats = [
@@ -52,7 +49,6 @@ export default function Header({ userEmail, userName }: HeaderProps) {
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light')
-    // In a real app, you'd use a theme provider
     document.documentElement.classList.toggle('dark')
   }
 
@@ -62,16 +58,6 @@ export default function Header({ userEmail, userName }: HeaderProps) {
         <div className="flex items-center justify-between">
           {/* Left Section */}
           <div className="flex items-center gap-6">
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              aria-label="Toggle menu"
-            >
-              <Menu className="w-5 h-5" />
-            </Button>
-
             {/* Date & Welcome */}
             <div className="hidden md:flex items-center gap-4">
               <div className="p-2 rounded-lg bg-primary/10">
@@ -157,60 +143,6 @@ export default function Header({ userEmail, userName }: HeaderProps) {
                   </span>
                 )}
               </Button>
-
-              {/* Notifications Dropdown */}
-              {showNotifications && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowNotifications(false)}
-                  />
-                  <Card className="absolute right-0 mt-2 w-80 z-50 shadow-2xl border-border/50">
-                    <div className="p-4 border-b">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-foreground">Notifications</h3>
-                        <span className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">
-                          {notifications} new
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Health updates and reminders
-                      </p>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {notificationsList.map((notification) => (
-                        <div
-                          key={notification.id}
-                          className={`p-4 border-b hover:bg-accent cursor-pointer transition-colors ${
-                            !notification.read ? 'bg-accent/30' : ''
-                          }`}
-                          onClick={() => setShowNotifications(false)}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className={`p-2 rounded-lg ${!notification.read ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                              <Bell className="w-4 h-4" />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm text-foreground">{notification.text}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {notification.time}
-                              </p>
-                            </div>
-                            {!notification.read && (
-                              <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="p-3 border-t">
-                      <Button variant="ghost" className="w-full text-sm">
-                        View all notifications
-                      </Button>
-                    </div>
-                  </Card>
-                </>
-              )}
             </div>
 
             {/* User Menu */}
@@ -234,68 +166,6 @@ export default function Header({ userEmail, userName }: HeaderProps) {
                 </div>
                 <ChevronDown className="w-4 h-4 text-muted-foreground hidden md:block" />
               </Button>
-
-              {/* User Menu Dropdown */}
-              {showUserMenu && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowUserMenu(false)}
-                  />
-                  <Card className="absolute right-0 mt-2 w-64 z-50 shadow-2xl border-border/50">
-                    <div className="p-4 border-b">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow">
-                          <User className="w-6 h-6 text-primary-foreground" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {safeUserName}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {safeUserEmail}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>Health Score</span>
-                          <span className="font-medium text-foreground">87/100</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden mt-1">
-                          <div 
-                            className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full" 
-                            style={{ width: '87%' }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="py-2">
-                      <Button variant="ghost" className="w-full justify-start">
-                        Profile Settings
-                      </Button>
-                      <Button variant="ghost" className="w-full justify-start">
-                        Account Settings
-                      </Button>
-                      <Button variant="ghost" className="w-full justify-start">
-                        Subscription
-                      </Button>
-                    </div>
-                    <div className="p-3 border-t">
-                      <Button 
-                        variant="outline" 
-                        className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => {
-                          // Add logout logic here
-                          setShowUserMenu(false)
-                        }}
-                      >
-                        Sign Out
-                      </Button>
-                    </div>
-                  </Card>
-                </>
-              )}
             </div>
           </div>
         </div>
@@ -306,7 +176,7 @@ export default function Header({ userEmail, userName }: HeaderProps) {
             {healthStats.map((stat, index) => (
               <div key={index} className="text-center p-3 rounded-lg bg-accent/30">
                 <div className="flex items-center justify-center gap-2 mb-1">
-                  <div className={`${stat.color}`}>
+                  <div className={stat.color}>
                     {stat.icon}
                   </div>
                   <div className="text-lg font-bold text-foreground">

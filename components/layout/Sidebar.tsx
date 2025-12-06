@@ -1,7 +1,7 @@
-// components/layout/Sidebar.tsx
+// components/layout/Sidebar.tsx - UPDATED WITH MOBILE SUPPORT
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { 
@@ -24,7 +24,9 @@ import {
   Home,
   TrendingUp,
   Activity,
-  Shield
+  Shield,
+  X,
+  Menu
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
@@ -37,8 +39,25 @@ interface SidebarProps {
 
 export default function Sidebar({ userEmail, userName }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
+
+  // Close sidebar on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileOpen) {
+        setMobileOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [mobileOpen])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -151,15 +170,13 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
   const safeUserEmail = userEmail || 'user@example.com'
   const safeUserName = userName || safeUserEmail.split('@')[0]
 
-  return (
-    <aside className={cn(
-      "flex flex-col h-screen border-r border-border bg-sidebar transition-all duration-300 ease-in-out sticky top-0",
-      collapsed ? "w-20" : "w-64"
-    )}>
+  // Sidebar content component (reused for both mobile and desktop)
+  const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <>
       {/* Logo Section */}
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center justify-between">
-          {!collapsed ? (
+          {(!collapsed || isMobile) ? (
             <Link href="/dashboard" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
                 <Heart className="w-6 h-6 text-primary-foreground" />
@@ -176,19 +193,36 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
               </div>
             </div>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setCollapsed(!collapsed)}
-            className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronLeft className="w-4 h-4" />
-            )}
-          </Button>
+          
+          {/* Desktop collapse button (hidden on mobile) */}
+          {!isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCollapsed(!collapsed)}
+              className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {collapsed ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <ChevronLeft className="w-4 h-4" />
+              )}
+            </Button>
+          )}
+          
+          {/* Mobile close button */}
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileOpen(false)}
+              className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
+              aria-label="Close sidebar"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -196,7 +230,7 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
       <div className="flex-1 overflow-y-auto py-6 px-4">
         {navItems.map((section) => (
           <div key={section.category} className="mb-8 last:mb-0">
-            {!collapsed && (
+            {(!collapsed || isMobile) && (
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-3">
                 {section.label}
               </h3>
@@ -221,7 +255,7 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
                     )}>
                       {item.icon}
                     </span>
-                    {!collapsed && (
+                    {(!collapsed || isMobile) && (
                       <>
                         <span className="flex-1 text-sm font-medium">{item.label}</span>
                         {item.badge && (
@@ -238,8 +272,8 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
           </div>
         ))}
 
-        {/* Daily Progress */}
-        {!collapsed && (
+        {/* Daily Progress - Hide when collapsed on desktop */}
+        {(!collapsed || isMobile) && (
           <div className="mt-8 p-4 rounded-xl bg-sidebar-accent/30 border border-sidebar-border">
             <h4 className="text-sm font-medium text-sidebar-foreground mb-3">Today's Progress</h4>
             <div className="space-y-3">
@@ -297,7 +331,7 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
                 )}
               >
                 <span className="text-muted-foreground">{item.icon}</span>
-                {!collapsed && (
+                {(!collapsed || isMobile) && (
                   <span className="text-sm font-medium">{item.label}</span>
                 )}
               </Link>
@@ -305,8 +339,8 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
           ))}
         </ul>
 
-        {/* User Profile */}
-        {!collapsed && (
+        {/* User Profile - Hide when collapsed on desktop */}
+        {(!collapsed || isMobile) && (
           <div className="p-3 rounded-xl bg-sidebar-accent/30 border border-sidebar-border">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow">
@@ -337,15 +371,57 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
           onClick={handleLogout}
           className={cn(
             "w-full text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-colors",
-            collapsed && "justify-center"
+            (collapsed && !isMobile) && "justify-center"
           )}
         >
           <LogOut className="w-5 h-5" />
-          {!collapsed && (
+          {(!collapsed || isMobile) && (
             <span className="ml-2 text-sm font-medium">Logout</span>
           )}
         </Button>
       </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* Mobile Menu Button - Always visible on mobile */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setMobileOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm border"
+        aria-label="Open menu"
+      >
+        <Menu className="w-5 h-5" />
+      </Button>
+
+      {/* Desktop Sidebar */}
+      <aside className={cn(
+        "hidden lg:flex flex-col h-screen border-r border-border bg-sidebar transition-all duration-300 ease-in-out sticky top-0",
+        collapsed ? "w-20" : "w-64"
+      )}>
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile Sidebar Overlay */}
+      {mobileOpen && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            onClick={() => setMobileOpen(false)}
+          />
+          
+          {/* Mobile Sidebar */}
+          <aside className={cn(
+            "lg:hidden fixed inset-y-0 left-0 z-50 w-64 flex flex-col h-screen border-r border-border bg-sidebar transition-transform duration-300 ease-in-out",
+            mobileOpen ? "translate-x-0" : "-translate-x-full"
+          )}>
+            <SidebarContent isMobile />
+          </aside>
+        </>
+      )}
+    </>
   )
 }
