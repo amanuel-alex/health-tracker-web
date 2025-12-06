@@ -1,4 +1,4 @@
-// components/Sidebar.tsx
+
 'use client'
 
 import { useState } from 'react'
@@ -10,7 +10,6 @@ import {
   BarChart3,
   Calendar,
   Target,
-  Bell,
   Settings,
   HelpCircle,
   LogOut,
@@ -21,22 +20,28 @@ import {
   Flame,
   Droplets,
   Moon,
-  Apple
+  Apple,
+  Home
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { useTheme } from './theme-provider'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
-export default function Sidebar() {
+interface SidebarProps {
+  userEmail?: string
+  userName?: string
+}
+
+export default function Sidebar({ userEmail, userName }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [activeCategory, setActiveCategory] = useState('overview')
   const pathname = usePathname()
   const router = useRouter()
-  const { theme } = useTheme()
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/auth/login')
+    router.push('/login')
   }
 
   const navItems = [
@@ -97,30 +102,6 @@ export default function Sidebar() {
           label: 'Sleep',
           icon: <Moon className="w-5 h-5" />,
           badge: null
-        },
-        {
-          href: '/dashboard/vitals',
-          label: 'Vitals',
-          icon: <Heart className="w-5 h-5" />,
-          badge: null
-        }
-      ]
-    },
-    {
-      category: 'goals',
-      label: 'Goals & Progress',
-      items: [
-        {
-          href: '/dashboard/goals',
-          label: 'My Goals',
-          icon: <Target className="w-5 h-5" />,
-          badge: '3'
-        },
-        {
-          href: '/dashboard/challenges',
-          label: 'Challenges',
-          icon: <Target className="w-5 h-5" />,
-          badge: 'New'
         }
       ]
     }
@@ -147,11 +128,14 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className={`${collapsed ? 'w-20' : 'w-64'} flex flex-col h-screen border-r border-border bg-sidebar transition-all duration-300 sticky top-0`}>
+    <aside className={cn(
+      "flex flex-col h-screen border-r border-border bg-sidebar transition-all duration-300 sticky top-0",
+      collapsed ? "w-20" : "w-64"
+    )}>
       {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center justify-between">
-          {!collapsed && (
+          {!collapsed ? (
             <Link href="/dashboard" className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                 <Heart className="w-6 h-6 text-primary-foreground" />
@@ -161,17 +145,18 @@ export default function Sidebar() {
                 <span className="text-xs text-muted-foreground">Dashboard</span>
               </div>
             </Link>
-          )}
-          {collapsed && (
+          ) : (
             <div className="w-full flex justify-center">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                 <Heart className="w-6 h-6 text-primary-foreground" />
               </div>
             </div>
           )}
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setCollapsed(!collapsed)}
-            className="p-2 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground"
+            className="text-sidebar-foreground hover:bg-sidebar-accent"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? (
@@ -179,7 +164,7 @@ export default function Sidebar() {
             ) : (
               <ChevronLeft className="w-4 h-4" />
             )}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -197,13 +182,18 @@ export default function Sidebar() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors group ${
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors group",
                       isActive(item.href)
-                        ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                        : 'text-sidebar-foreground hover:bg-sidebar-accent'
-                    }`}
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent"
+                    )}
                   >
-                    <span className={`${isActive(item.href) ? 'text-sidebar-primary-foreground' : 'text-muted-foreground group-hover:text-sidebar-accent-foreground'}`}>
+                    <span className={cn(
+                      isActive(item.href)
+                        ? "text-sidebar-primary-foreground"
+                        : "text-muted-foreground group-hover:text-sidebar-accent-foreground"
+                    )}>
                       {item.icon}
                     </span>
                     {!collapsed && (
@@ -223,7 +213,7 @@ export default function Sidebar() {
           </div>
         ))}
 
-        {/* Quick Stats (Visible when expanded) */}
+        {/* Quick Stats */}
         {!collapsed && (
           <div className="mt-8 p-4 rounded-xl bg-sidebar-accent/30 border border-sidebar-border">
             <h4 className="text-sm font-medium text-sidebar-foreground mb-3">Today's Progress</h4>
@@ -265,11 +255,12 @@ export default function Sidebar() {
             <li key={item.href}>
               <Link
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
+                className={cn(
+                  "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors",
                   isActive(item.href)
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent'
-                }`}
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent"
+                )}
               >
                 <span className="text-muted-foreground">{item.icon}</span>
                 {!collapsed && (
@@ -281,32 +272,36 @@ export default function Sidebar() {
         </ul>
 
         {/* User Profile */}
-        <div className={`flex items-center gap-3 p-3 rounded-lg hover:bg-sidebar-accent transition-colors cursor-pointer ${collapsed ? 'justify-center' : ''}`}>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-            <User className="w-4 h-4 text-primary-foreground" />
-          </div>
-          {!collapsed && (
+        {!collapsed && (userName || userEmail) && (
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent/30 mb-4">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <User className="w-4 h-4 text-primary-foreground" />
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-sidebar-foreground truncate">
-                John Doe
+                {userName || 'User'}
               </p>
               <p className="text-xs text-muted-foreground truncate">
-                Premium Member
+                {userEmail || 'Health Member'}
               </p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Logout Button */}
-        <button
+        <Button
+          variant="ghost"
           onClick={handleLogout}
-          className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-colors ${collapsed ? 'justify-center' : ''}`}
+          className={cn(
+            "w-full text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-colors",
+            collapsed && "justify-center"
+          )}
         >
           <LogOut className="w-5 h-5" />
           {!collapsed && (
-            <span className="text-sm font-medium">Logout</span>
+            <span className="ml-2 text-sm font-medium">Logout</span>
           )}
-        </button>
+        </Button>
       </div>
     </aside>
   )
