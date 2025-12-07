@@ -1,9 +1,8 @@
 // app/auth/signup/page.tsx
 'use client'
-
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { 
   Eye, 
@@ -31,12 +30,23 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    // Check for any query parameters
+    const errorParam = searchParams.get('error')
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam))
+    }
+  }, [searchParams])
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setSuccessMessage('')
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
@@ -51,35 +61,67 @@ export default function SignupPage() {
     }
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
+      // Clear any existing session
+      await supabase.auth.signOut()
+      
+      // Sign up the user
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email.trim(),
         password: formData.password,
         options: {
           data: {
             full_name: formData.fullName,
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
-      if (authError) throw authError
+      if (error) throw error
 
-      // Auto-login after signup
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
+      console.log('Signup response:', data)
+
+      // If user needs email confirmation
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        setSuccessMessage('Please check your email to confirm your account. Then you can sign in.')
+        setSuccess(true)
+        return
+      }
+
+      // Try to auto-login if email confirmation is not required
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email: formData.email.trim(),
         password: formData.password,
       })
 
-      if (signInError) {
-        setSuccess(true)
-        setTimeout(() => {
-          router.push('/auth/login?message=account-created')
-        }, 3000)
+      if (loginError) {
+        // If auto-login fails, redirect to login page with pre-filled email
+        router.push(`/auth/login?message=account-created&email=${encodeURIComponent(formData.email)}`)
       } else {
-        router.push('/dashboard')
-        router.refresh()
+        // Wait for session to be established
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // Clear form
+        setFormData({
+          email: '',
+          password: '',
+          confirmPassword: '',
+          fullName: '',
+        })
+        
+        // Force hard redirect to dashboard
+        window.location.href = '/dashboard'
       }
     } catch (error: any) {
-      setError(error.message)
+      console.error('Signup error:', error)
+      
+      // Handle specific error cases
+      if (error.message.includes('User already registered')) {
+        setError('An account with this email already exists. Please sign in instead.')
+      } else if (error.message.includes('Password should be at least')) {
+        setError('Password must be at least 6 characters long.')
+      } else {
+        setError(error.message || 'Failed to create account. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -93,7 +135,7 @@ export default function SignupPage() {
     'Secure data encryption'
   ]
 
-  if (success) {
+  if (success || successMessage) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10 flex items-center justify-center p-4">
         <div className="w-full max-w-lg">
@@ -103,14 +145,31 @@ export default function SignupPage() {
                 <CheckCircle className="w-10 h-10 text-primary-foreground" />
               </div>
               <h1 className="text-3xl font-bold text-foreground mb-3">
-                Welcome to HealthTrack! 🎉
+                {successMessage ? 'Check Your Email' : 'Account Created! 🎉'}
               </h1>
               <p className="text-muted-foreground mb-8">
-                Your account has been created successfully. We're preparing your dashboard...
+                {successMessage || 'Your account has been created successfully. Redirecting to dashboard...'}
               </p>
-              <div className="animate-pulse">
-                <div className="w-12 h-2 bg-primary/20 rounded-full mx-auto mb-2"></div>
-                <div className="w-24 h-2 bg-primary/10 rounded-full mx-auto"></div>
+              
+              {!successMessage && (
+                <div className="animate-pulse">
+                  <div className="w-12 h-2 bg-primary/20 rounded-full mx-auto mb-2"></div>
+                  <div className="w-24 h-2 bg-primary/10 rounded-full mx-auto"></div>
+                </div>
+              )}
+              
+              <div className="mt-8 space-y-4">
+                <Link
+                  href="/auth/login"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors"
+                >
+                  Go to Login
+                </Link>
+                <p className="text-sm text-muted-foreground">
+                  <Link href="/" className="text-primary hover:text-primary/80">
+                    Return to home
+                  </Link>
+                </p>
               </div>
             </div>
           </div>
@@ -209,6 +268,7 @@ export default function SignupPage() {
                     onChange={(e) => setFormData({...formData, fullName: e.target.value})}
                     className="w-full pl-12 pr-4 py-3.5 bg-background/50 border border-input rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/60"
                     placeholder="John Doe"
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -229,6 +289,7 @@ export default function SignupPage() {
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     className="w-full pl-12 pr-4 py-3.5 bg-background/50 border border-input rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/60"
                     placeholder="you@example.com"
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -249,11 +310,13 @@ export default function SignupPage() {
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                     className="w-full pl-12 pr-12 py-3.5 bg-background/50 border border-input rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/60"
                     placeholder="••••••••"
+                    disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    disabled={loading}
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -283,11 +346,13 @@ export default function SignupPage() {
                     onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
                     className="w-full pl-12 pr-12 py-3.5 bg-background/50 border border-input rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/60"
                     placeholder="••••••••"
+                    disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    disabled={loading}
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -304,6 +369,7 @@ export default function SignupPage() {
                   type="checkbox"
                   required
                   className="h-4 w-4 mt-1 rounded border-input text-primary focus:ring-primary/30 focus:ring-2"
+                  disabled={loading}
                 />
                 <label className="text-sm text-muted-foreground">
                   I agree to the{' '}
