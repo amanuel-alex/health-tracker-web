@@ -1,13 +1,13 @@
-
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, Lock, Check, X } from 'lucide-react'
 
-export default function ResetPasswordPage() {
+// Create a component that uses useSearchParams
+function ResetPasswordContent() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -17,7 +17,6 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false)
   const [validToken, setValidToken] = useState(false)
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
     // Check if we have a valid session (user clicked the reset link)
@@ -196,5 +195,21 @@ export default function ResetPasswordPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+// Main component with Suspense wrapper
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading password reset...</p>
+        </div>
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }

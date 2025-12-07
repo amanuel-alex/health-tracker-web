@@ -1,16 +1,17 @@
-// app/(auth)/login/page.tsx
+
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Mail, Lock, Heart, Sparkles, Shield, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
-export default function LoginPage() {
+// Create a separate component that uses useSearchParams
+function LoginContent() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -18,6 +19,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const router = useRouter()
+  const { useSearchParams } = require('next/navigation')
   const searchParams = useSearchParams()
 
   useEffect(() => {
@@ -264,7 +266,7 @@ export default function LoginPage() {
             <div className="text-center text-sm text-muted-foreground">
               Don't have an account?{' '}
               <Link
-                href="/signup"
+                href="/auth/signup"
                 className="font-semibold text-primary hover:text-primary/80 transition-colors"
               >
                 Sign up
@@ -299,5 +301,21 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Main component with Suspense wrapper
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading login page...</p>
+        </div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   )
 }

@@ -1,8 +1,9 @@
 // app/auth/signup/page.tsx
 'use client'
-import { useState, useEffect } from 'react'
+
+import { useState, useEffect, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { 
   Eye, 
@@ -18,7 +19,8 @@ import {
   TrendingUp
 } from 'lucide-react'
 
-export default function SignupPage() {
+// Create a component that uses useSearchParams
+function SignupContent() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -32,15 +34,6 @@ export default function SignupPage() {
   const [success, setSuccess] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const router = useRouter()
-  const searchParams = useSearchParams()
-
-  useEffect(() => {
-    // Check for any query parameters
-    const errorParam = searchParams.get('error')
-    if (errorParam) {
-      setError(decodeURIComponent(errorParam))
-    }
-  }, [searchParams])
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -427,5 +420,21 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Main component with Suspense wrapper
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading signup page...</p>
+        </div>
+      </div>
+    }>
+      <SignupContent />
+    </Suspense>
   )
 }
