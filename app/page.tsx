@@ -242,14 +242,12 @@ export default function HomePage() {
               <h2 className="text-4xl font-bold text-foreground mb-6">
                 Ready to Transform Your Health?
               </h2>
-              <p className="text-xl text-muted-foreground mb-8 font-serif">
-                Start your 14-day free trial. No credit card required.
-              </p>
+            
               <Link 
                 href="/auth/signup" 
                 className="group inline-flex items-center gap-3 bg-primary text-primary-foreground px-10 py-5 rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl text-lg"
               >
-                <span>Start Your Free Trial</span>
+               
                 <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
               </Link>
               <p className="mt-4 text-sm text-muted-foreground">
